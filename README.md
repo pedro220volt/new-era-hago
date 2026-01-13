@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sistema Oficial New Era - Hago</title>
+<style>
+body {
+    background:#0b0b0b;
+    color:#00ffd5;
+    font-family:Arial, sans-serif;
+    padding:20px;
+}
+h1,h2,h3 {
+    text-align:center;
+}
+label {
+    display:block;
+    margin-top:12px;
+}
+input, textarea, select, button {
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    background:#000;
+    color:#00ffd5;
+    border:1px solid #00ffd5;
+}
+button {
+    margin-top:15px;
+    font-size:15px;
+}
+button:hover {
+    background:#00ffd5;
+    color:#000;
+}
+.box {
+    border:1px solid #00ffd5;
+    padding:15px;
+    margin-top:20px;
+}
+.error { color:#ff4d4d; }
+.success { color:#00ff9c; }
+.hidden { display:none; }
+img {
+    max-width:100%;
+    margin-top:10px;
+    border:1px solid #00ffd5;
+}
+.admin {
+    border:1px dashed #ffcc00;
+    padding:15px;
+    margin-top:20px;
+}
+canvas {
+    background:#fff;
+    border:2px solid #00ffd5;
+    width:100%;
+    height:200px;
+    touch-action:none;
+}
+</style>
+</head>
+<body>
+
+<h1>📋 Declaração Oficial Hago — Família New Era</h1>
+
+<!-- TERMOS -->
+<div class="box">
+<h2>📜 Regras da Família New Era</h2>
+<p>
+1. A Família New Era permite contas principais e secundárias, desde que declaradas.<br>
+2. Todo histórico de famílias deve ser informado, inclusive famílias anteriores.<br>
+3. É proibido omitir informações relevantes.<br>
+4. Prints podem ser solicitados para conferência.<br>
+5. O não cumprimento das regras pode resultar em recusa ou remoção da família.
+</p>
+
+<label>
+<input type="checkbox" id="aceite"> Declaro que li, entendi e aceito as regras da Família New Era
+</label>
+</div>
+
+<!-- FORMULÁRIO -->
+<label>ID do Hago *</label>
+<input type="number" id="id">
+
+<label>Nome atual no Hago *</label>
+<input type="text" id="nomeAtual">
+
+<label>Nomes antigos (separar por vírgula)</label>
+<input type="text" id="nomesAntigos">
+
+<label>Quantas famílias participou? *</label>
+<input type="number" id="qtdFamilias">
+
+<label>Nome de TODAS as famílias *</label>
+<textarea id="familias" rows="4"></textarea>
+
+<label>Possui mais de uma conta?</label>
+<select id="multiConta" onchange="extraConta()">
+<option value="Não">Não</option>
+<option value="Sim">Sim</option>
+</select>
+
+<div id="extra" class="hidden">
+<label>Nome da outra conta</label>
+<input type="text" id="outraConta">
+</div>
+
+<label>Conta criada por *</label>
+<select id="metodo">
+<option value="">Selecione</option>
+<option>Email</option>
+<option>Telefone</option>
+</select>
+
+<label>Upload de prints (perfil, famílias etc)</label>
+<input type="file" accept="image/*" onchange="preview(event)">
+
+<div id="preview"></div>
+
+<!-- ASSINATURA -->
+<div class="box">
+<h3>✍️ Assinatura Digital</h3>
+<canvas id="assinatura"></canvas>
+<button onclick="limparAssinatura()">Limpar Assinatura</button>
+</div>
+
+<button onclick="gerar()">Gerar Análise</button>
+<button onclick="limparTudo()">Apagar Análise</button>
+
+<div id="resultado"></div>
+
+<!-- ÁREA ADM -->
+<div class="admin">
+<h2>🔐 Área ADM</h2>
+
+<input type="password" id="senha" placeholder="Senha ADM">
+<button onclick="loginADM()">Entrar</button>
+
+<div id="painelADM" class="hidden">
+<p><strong>Status da análise:</strong></p>
+<button onclick="aprovar()">✅ Aprovar</button>
+<button onclick="reprovar()">❌ Reprovar</button>
+<button onclick="imprimir()">🖨️ Imprimir / PDF</button>
+
+<p id="statusFinal"></p>
+</div>
+</div>
+
+<script>
+const senhaADM = "newera123";
+
+/* CONTA EXTRA */
+function extraConta() {
+    document.getElementById("extra").classList.toggle(
+        "hidden",
+        document.getElementById("multiConta").value !== "Sim"
+    );
+}
+
+/* PREVIEW IMAGENS */
+function preview(e) {
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(e.target.files[0]);
+    document.getElementById("preview").appendChild(img);
+}
+
+/* ASSINATURA DIGITAL */
+const canvas = document.getElementById("assinatura");
+const ctx = canvas.getContext("2d");
+let desenhando = false;
+
+canvas.addEventListener("mousedown", iniciar);
+canvas.addEventListener("mouseup", parar);
+canvas.addEventListener("mousemove", desenhar);
+
+canvas.addEventListener("touchstart", iniciar);
+canvas.addEventListener("touchend", parar);
+canvas.addEventListener("touchmove", desenhar);
+
+function iniciar(e) {
+    desenhando = true;
+    desenhar(e);
+}
+
+function parar() {
+    desenhando = false;
+    ctx.beginPath();
+}
+
+function desenhar(e) {
+    if (!desenhando) return;
+    e.preventDefault();
+
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#000";
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+}
+
+function limparAssinatura() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+/* GERAR ANÁLISE */
+function gerar() {
+    if (!document.getElementById("aceite").checked) {
+        alert("Você precisa aceitar os termos.");
+        return;
+    }
+
+    if (canvas.toDataURL() === document.createElement("canvas").toDataURL()) {
+        alert("Assinatura obrigatória.");
+        return;
+    }
+
+    const id = document.getElementById("id").value;
+    const nome = document.getElementById("nomeAtual").value;
+    const familias = document.getElementById("familias").value;
+    const metodo = document.getElementById("metodo").value;
+
+    if (!id || !nome || !familias || !metodo) {
+        alert("Preencha todos os campos obrigatórios.");
+        return;
+    }
+
+    document.getElementById("resultado").innerHTML = `
+    <div class="box success">
+        <h3>📑 Análise Gerada</h3>
+        <p><strong>ID:</strong> ${id}</p>
+        <p><strong>Nome:</strong> ${nome}</p>
+        <p><strong>Famílias declaradas:</strong><br>${familias.replace(/\n/g,"<br>")}</p>
+        <p><strong>Método:</strong> ${metodo}</p>
+        <p><strong>Assinatura registrada abaixo</strong></p>
+        <img src="${canvas.toDataURL()}">
+    </div>`;
+}
+
+/* LIMPAR */
+function limparTudo() {
+    document.getElementById("resultado").innerHTML = "";
+    document.getElementById("preview").innerHTML = "";
+    document.getElementById("statusFinal").innerHTML = "";
+    limparAssinatura();
+}
+
+/* ADM */
+function loginADM() {
+    if (document.getElementById("senha").value === senhaADM) {
+        document.getElementById("painelADM").classList.remove("hidden");
+    } else {
+        alert("Senha incorreta");
+    }
+}
+
+function aprovar() {
+    document.getElementById("statusFinal").innerHTML =
+        "✅ STATUS FINAL: APROVADO";
+}
+
+function reprovar() {
+    document.getElementById("statusFinal").innerHTML =
+        "❌ STATUS FINAL: REPROVADO";
+}
+
+function imprimir() {
+    window.print();
+}
+</script>
+
+</body>
+</html>
